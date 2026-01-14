@@ -1,0 +1,20 @@
+{
+  "name": "aula01",
+  "version": "1.0.0",
+  "description": "Aula 01",
+  "main": "app.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node app.js"
+  },
+  "keywords": [
+    "aula",
+    "programa"
+  ],
+  "author": "Joel Santos JS",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^5.2.1"
+  }
+}
