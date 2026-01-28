@@ -1,12 +1,15 @@
 import express from "express";
 import "dotenv/config";
 import cursoRoutes from "./src/routes/curso/cursoRoutes.js";
+import alunoRoutes from "./src/routes/aluno/alunoRoutes.js";
 
 const app = express();
 const PORT = process.env.PORT;
 
 app.use(express.json());
 app.use("/cursos", cursoRoutes);
+app.use("/alunos", alunoRoutes);
+app.use("/alunos", alunoRoutes);
 
 app.get("/", (req,res) =>{
     res.status(200).send("Hello World!");
