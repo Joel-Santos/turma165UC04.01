@@ -38,7 +38,8 @@ export class CursoModel {
         cursos.splice(index, 1);
         return true;
     }
-    static listarAlunosPorCurso(idCurso){
+
+    static listarAlunosPorCurso(idCurso) {
         return alunos.filter(a => a.cursoId === parseInt(idCurso));
     }
 
