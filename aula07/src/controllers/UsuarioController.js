@@ -63,6 +63,85 @@ export class UsuarioController {
         }
     }
 
+    static buscarPorId(req, res){
+        try {
+            const {id} = req.params;
+            const usuario = UsuarioModel.buscarPorId(id);
+            if(!usuario){
+                res.status(404).json({msg: "Nenhum usuário encontrado com esse ID"});
+                return
+            }
+            res.status(200).json({msg: "Usuário encontrado", usuario});
+        } catch (error) {
+            res.status(500).json({msg: "Erro interno ao buscar o usuário por ID", erro: error.message});
+        }
+    }
+
+    static deletarUser(req, res){
+        try {
+            const {id} = req.params;
+            const usuario = UsuarioModel.deletarUsuario(id);
+            if(!usuario){
+                res.status(404).json({msg: "Usuário não encontrado."});
+                return
+            }
+            res.status(200).json({msg:"Usuário deletado com sucesso!"});
+        } catch (error) {
+            res.status(500).json({msg:"Erro interno ao deletar o usuário.", erro: error.message});
+        }
+    }
+
+    static async atualizarUsuario(req, res){
+        try {
+            const {id} = req.params;
+            const {nome, email, senha} = req.body;
+            if(!nome || !email || !senha){
+                res.status(400).json({msg:"Todos os campos devem ser preenchidos"});
+                return;
+            }
+            const senhaHash = await bcrypt.hash(senha, parseInt(process.env.SALT));
+            const novosDados = {
+                id: id,
+                nome: nome,
+                email: email,
+                senha: senhaHash
+            }
+            const usuarioAtualizado = UsuarioModel.atualizarUsuario(id, novosDados);
+            if(!usuarioAtualizado){
+                res.status(404).json({msg: "Nenhum usuário encontrado"});
+                return;
+            }
+            res.status(201).json({msg: "Usuario Atualizado com sucesso", usuarioAtualizado});
+        } catch (error) {
+            res.status(500).json({msg: "Erro interno ao atualizar usuário", erro: error.message});
+        }
+    }
+    static async atualizarParcialmente(req, res){
+        try {
+            const {id} = req.params;
+            const campos = {...req.body} //Pode conter nome, email, senha
+            if(!campos){
+                res.status(400).json({msg:"Nenhum valor recebido para atualizar"});
+                return
+            }
+            if(campos.senha){
+                campos.senha = await bcrypt.hash(campos.senha, parseInt(process.env.SALT));
+            }
+            const usuarioAtualizado = UsuarioModel.atualizarUsuario(id, campos);
+            if(!usuarioAtualizado){
+                res.status(404).json({msg: "Nenhum usuário encontrado"});
+                return
+            }
+             res.status(201).json({msg: "Usuário atualizado com sucesso", usuarioAtualizado});
+        } catch (error) {
+            res.status(500).json({msg: "Erro interno ao atualizar parcialmente o usuário", erro : error.message});
+        }
+    }
+
+
+
+
+
 
 
 }
