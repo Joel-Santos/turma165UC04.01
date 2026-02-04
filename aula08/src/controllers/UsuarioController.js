@@ -7,11 +7,12 @@ import jwt from "jsonwebtoken";
 export class UsuarioController {
     static listarUsuarios(req, res) {
         try {
+            const usuario = req.usuario;
             const usuarios = UsuarioModel.listarUsuarios();
             if (!usuarios || usuarios.length === 0) {
                 res.status(404).json({ msg: "Nenhum usuário cadastrado!" });
             }
-            res.status(200).json({ msg: "Usuários encontrados", usuarios });
+            res.status(200).json({ msg: "Usuários encontrados", solicitante: usuario.nome, usuarios});
         } catch (error) {
             res.status(500).json({ msg: "Erro interno ao listar usuários", erro: error.message });
         }
