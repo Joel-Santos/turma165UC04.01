@@ -17,15 +17,14 @@ export class UsuarioController {
             if (!usuarios || usuarios.length === 0) {
                 res.status(404).json({ msg: "Nenhum usuário cadastrado!" });
             }
-            res.status(200).json({ msg: "Usuários encontrados", solicitante: usuario.nome, usuarios });
+            res.status(200).json({ msg: "Usuários encontrados", solicitante: usuario.nome, role: usuario.role, usuarios });
         } catch (error) {
             res.status(500).json({ msg: "Erro interno ao listar usuários", erro: error.message });
         }
     }
-
-    static async criarUsuario(req, res) {
+ static async criarUsuario(req, res) {
         try {
-            const { nome, email, senha } = req.body;
+            const { nome, email, senha} = req.body;
             if (!nome || !email || !senha) {
                 res.status(400).json({ msg: "Todos os campos devem ser preenchidos" });
                 return;
@@ -35,7 +34,32 @@ export class UsuarioController {
                 id: uuidv4(),
                 nome: nome,
                 email: email,
-                senha: senhaHash
+                senha: senhaHash,
+                role: "USER"
+            }
+            const usuarioCriado = UsuarioModel.criarUsuario(novoUsuario);
+            if (usuarioCriado) {
+                res.status(201).json({ msg: "Usuário criado com sucesso!", usuarioCriado });
+                return;
+            }
+        } catch (error) {
+            res.status(500).json({ msg: "Erro interno ao criar usuário", erro: error.message });
+        }
+    }
+    static async criarUsuarioPorAdmin(req, res) {
+        try {
+            const { nome, email, senha, role } = req.body;
+            if (!nome || !email || !senha || !role) {
+                res.status(400).json({ msg: "Todos os campos devem ser preenchidos" });
+                return;
+            }
+            const senhaHash = await bcrypt.hash(senha, parseInt(process.env.SALT));
+            const novoUsuario = {
+                id: uuidv4(),
+                nome: nome,
+                email: email,
+                senha: senhaHash,
+                role: role
             }
             const usuarioCriado = UsuarioModel.criarUsuario(novoUsuario);
             if (usuarioCriado) {
@@ -67,7 +91,7 @@ export class UsuarioController {
 
             //gerar um token JWT
             const token = jwt.sign(
-                { id: usuario.id, email: usuario.email, nome: usuario.nome }, //Informações/dados que ficarão no payload do Token
+                { id: usuario.id, email: usuario.email, nome: usuario.nome, role: usuario.role }, //Informações/dados que ficarão no payload do Token
                 process.env.JWT_SECRET, // Chave secreta para assinar o Token
                 { expiresIn: "1h" } //Tempo de expiração do token
             )
@@ -113,7 +137,12 @@ export class UsuarioController {
     static async atualizarUsuario(req, res) {
         try {
             const { id } = req.params;
+            const usuario = req.usuario;
             const { nome, email, senha } = req.body;
+            if(usuario.role!== "ADMIN" && usuario.id !== id){
+                res.status(403).json({msg: "Acesso negado - você não pode atualizar este usuário"});
+                return;
+            }
             if (!nome || !email || !senha) {
                 res.status(400).json({ msg: "Todos os campos devem ser preenchidos" });
                 return;
@@ -138,7 +167,12 @@ export class UsuarioController {
     static async atualizarParcialmente(req, res) {
         try {
             const { id } = req.params;
+            const usuario = req.usuario;
             const campos = { ...req.body } //Pode conter nome, email, senha
+            if(usuario.role!== "ADMIN" && usuario.id !== id){
+                res.status(403).json({msg: "Acesso negado - você não pode atualizar este usuário"});
+                return;
+            }
             if (!campos) {
                 res.status(400).json({ msg: "Nenhum valor recebido para atualizar" });
                 return
