@@ -2,6 +2,11 @@ import { UsuarioModel } from "../models/UsuarioModel.js";
 import bcrypt from "bcrypt";
 import { v4 as uuidv4 } from "uuid";
 import jwt from "jsonwebtoken";
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 
 export class UsuarioController {
@@ -12,7 +17,7 @@ export class UsuarioController {
             if (!usuarios || usuarios.length === 0) {
                 res.status(404).json({ msg: "Nenhum usuário cadastrado!" });
             }
-            res.status(200).json({ msg: "Usuários encontrados", solicitante: usuario.nome, usuarios});
+            res.status(200).json({ msg: "Usuários encontrados", solicitante: usuario.nome, usuarios });
         } catch (error) {
             res.status(500).json({ msg: "Erro interno ao listar usuários", erro: error.message });
         }
@@ -62,50 +67,55 @@ export class UsuarioController {
 
             //gerar um token JWT
             const token = jwt.sign(
-                {id: usuario.id, email:usuario.email, nome: usuario.nome}, //Informações/dados que ficarão no payload do Token
+                { id: usuario.id, email: usuario.email, nome: usuario.nome }, //Informações/dados que ficarão no payload do Token
                 process.env.JWT_SECRET, // Chave secreta para assinar o Token
-                {expiresIn: "1h"} //Tempo de expiração do token
+                { expiresIn: "1h" } //Tempo de expiração do token
             )
-            res.status(200).json({msg: "Login realizado com sucesso!", usuario: usuario.nome, token});
+            res.cookie("token", token, {
+                httpOnly: true,
+                maxAge: 60 * 60 * 1000, //1h
+                sameSite: "lax"
+            });
+            res.status(200).json({ msg: "Login realizado com sucesso!", usuario: usuario.nome, token });
         } catch (error) {
-            res.status(500).json({msg: "Erro interno ao realizar o login", erro: error.message});
+            res.status(500).json({ msg: "Erro interno ao realizar o login", erro: error.message });
         }
     }
 
-    static buscarPorId(req, res){
+    static buscarPorId(req, res) {
         try {
-            const {id} = req.params;
+            const { id } = req.params;
             const usuario = UsuarioModel.buscarPorId(id);
-            if(!usuario){
-                res.status(404).json({msg: "Nenhum usuário encontrado com esse ID"});
+            if (!usuario) {
+                res.status(404).json({ msg: "Nenhum usuário encontrado com esse ID" });
                 return
             }
-            res.status(200).json({msg: "Usuário encontrado", usuario});
+            res.status(200).json({ msg: "Usuário encontrado", usuario });
         } catch (error) {
-            res.status(500).json({msg: "Erro interno ao buscar o usuário por ID", erro: error.message});
+            res.status(500).json({ msg: "Erro interno ao buscar o usuário por ID", erro: error.message });
         }
     }
 
-    static deletarUser(req, res){
+    static deletarUser(req, res) {
         try {
-            const {id} = req.params;
+            const { id } = req.params;
             const usuario = UsuarioModel.deletarUsuario(id);
-            if(!usuario){
-                res.status(404).json({msg: "Usuário não encontrado."});
+            if (!usuario) {
+                res.status(404).json({ msg: "Usuário não encontrado." });
                 return
             }
-            res.status(200).json({msg:"Usuário deletado com sucesso!"});
+            res.status(200).json({ msg: "Usuário deletado com sucesso!" });
         } catch (error) {
-            res.status(500).json({msg:"Erro interno ao deletar o usuário.", erro: error.message});
+            res.status(500).json({ msg: "Erro interno ao deletar o usuário.", erro: error.message });
         }
     }
 
-    static async atualizarUsuario(req, res){
+    static async atualizarUsuario(req, res) {
         try {
-            const {id} = req.params;
-            const {nome, email, senha} = req.body;
-            if(!nome || !email || !senha){
-                res.status(400).json({msg:"Todos os campos devem ser preenchidos"});
+            const { id } = req.params;
+            const { nome, email, senha } = req.body;
+            if (!nome || !email || !senha) {
+                res.status(400).json({ msg: "Todos os campos devem ser preenchidos" });
                 return;
             }
             const senhaHash = await bcrypt.hash(senha, parseInt(process.env.SALT));
@@ -116,35 +126,41 @@ export class UsuarioController {
                 senha: senhaHash
             }
             const usuarioAtualizado = UsuarioModel.atualizarUsuario(id, novosDados);
-            if(!usuarioAtualizado){
-                res.status(404).json({msg: "Nenhum usuário encontrado"});
+            if (!usuarioAtualizado) {
+                res.status(404).json({ msg: "Nenhum usuário encontrado" });
                 return;
             }
-            res.status(201).json({msg: "Usuario Atualizado com sucesso", usuarioAtualizado});
+            res.status(201).json({ msg: "Usuario Atualizado com sucesso", usuarioAtualizado });
         } catch (error) {
-            res.status(500).json({msg: "Erro interno ao atualizar usuário", erro: error.message});
+            res.status(500).json({ msg: "Erro interno ao atualizar usuário", erro: error.message });
         }
     }
-    static async atualizarParcialmente(req, res){
+    static async atualizarParcialmente(req, res) {
         try {
-            const {id} = req.params;
-            const campos = {...req.body} //Pode conter nome, email, senha
-            if(!campos){
-                res.status(400).json({msg:"Nenhum valor recebido para atualizar"});
+            const { id } = req.params;
+            const campos = { ...req.body } //Pode conter nome, email, senha
+            if (!campos) {
+                res.status(400).json({ msg: "Nenhum valor recebido para atualizar" });
                 return
             }
-            if(campos.senha){
+            if (campos.senha) {
                 campos.senha = await bcrypt.hash(campos.senha, parseInt(process.env.SALT));
             }
             const usuarioAtualizado = UsuarioModel.atualizarUsuario(id, campos);
-            if(!usuarioAtualizado){
-                res.status(404).json({msg: "Nenhum usuário encontrado"});
+            if (!usuarioAtualizado) {
+                res.status(404).json({ msg: "Nenhum usuário encontrado" });
                 return
             }
-             res.status(201).json({msg: "Usuário atualizado com sucesso", usuarioAtualizado});
+            res.status(201).json({ msg: "Usuário atualizado com sucesso", usuarioAtualizado });
         } catch (error) {
-            res.status(500).json({msg: "Erro interno ao atualizar parcialmente o usuário", erro : error.message});
+            res.status(500).json({ msg: "Erro interno ao atualizar parcialmente o usuário", erro: error.message });
         }
+    }
+
+    static paginaLogin(req, res) {
+       res.sendFile(
+        path.join(__dirname, '../public/index.html')
+    );
     }
 
 

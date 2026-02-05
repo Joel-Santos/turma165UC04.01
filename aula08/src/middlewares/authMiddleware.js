@@ -6,8 +6,14 @@ export function autenticarToken(req, res, next){
     //pegar o header  Authorization (formato esperado: "Bearer <token>")
     const autHeader = req.headers["authorization"];
     //Extrair o token do header (remover o "Bearer")
-    const token  = autHeader && autHeader.split(" ")[1];
+    const tokenHeader  = autHeader && autHeader.split(" ")[1];
     //Se não houver token, retorna erro 401 (não autorizado)
+
+    //Tenta Pegar do cookie: token = <token>
+    const tokenCookie = req.cookies?.token;
+
+    //Usa o que existir
+    const token = tokenHeader || tokenCookie;
     if(!token){
         res.status(401).json({msg: "Acesso negado -  Token não fornecido"});
         return

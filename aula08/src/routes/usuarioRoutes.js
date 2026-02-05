@@ -5,6 +5,7 @@ import express from "express";
 const router = express.Router();
 
 //Rotas publicas
+router.get("/login", UsuarioController.paginaLogin);
 router.post("/", UsuarioController.criarUsuario);
 router.post("/login", UsuarioController.loginUsuario);
 
