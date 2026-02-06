@@ -16,6 +16,11 @@ app.get("/", (req, res) => {
     res.status(200).json({ msg: "Api Rodandoooooooo" });
 });
 
+// Manipulador 404 - Deve ser a última rota
+app.use((req, res, next) => {
+  res.status(404).send('<h1>404: Página não encontrada</h1>');
+});
+
 app.listen(PORT, () => {
     console.log(`Aplicação rodando em http://localhost:${PORT}`);
 });
